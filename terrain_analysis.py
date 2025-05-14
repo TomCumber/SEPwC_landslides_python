@@ -1,13 +1,40 @@
 import argparse
+import numpy as np
+import rasterio
+import pandas as pd
+import geopandas as pd
 
 def convert_to_rasterio(raster_data, template_raster):
-  
-    return
+    """
+    The function specifically targets and reads the data from the first band
+    (layer) of the input template_raster dataset. This modifies the
+    'raster_data' array rather than generating a new one
+
+    """
+    raster_data[:] = template_raster.read(1)
+    
+    return template_raster #I had to install rasterio as it wasnt installed
 
 
 def extract_values_from_raster(raster, shape_object):
+    """
+    This extracts certain values from the raster file
 
-    return
+    """
+    
+    #this is creating a list of coordinate pairs using the shape objects
+    coord_pairs = [(shape.x, shape.y) for shape in shape_object]
+    
+    #this is samping the raster at certain coordinates
+    values = raster.sample(coord_pairs)
+    
+    #converts the 'values' into a list
+    value_list = []
+    for value_sample in values:
+        value_list.append(value_sample[0])
+    
+
+    return value_list
 
 
 def make_classifier(x, y, verbose=False):
