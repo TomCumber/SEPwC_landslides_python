@@ -36,6 +36,16 @@ def extract_values_from_raster(raster, shape_object):
 
     return value_list
 
+# dem (Digital Elevation model) used to calculate slope and espect of terrain.
+def calculate_slope(dem, x_value, y_value):
+    """This calculates the slope using pythagoras' theorem"""
+    x_data, y_data = np.gradient(dem, x_value, y_value)
+    #calculates gradient in direction of x and y
+    
+    h_slope_degrees = np.arctan(np.sqrt(x_data**2 + y_data**2) * (180 / np.pi))
+    # calculates slope length and concerts to angle in degrees
+    
+    return h_slope_degrees
 
 def make_classifier(x, y, verbose=False):
 
