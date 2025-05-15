@@ -3,6 +3,9 @@ import numpy as np
 import rasterio
 import pandas as pd
 import geopandas as pd
+from proximity import proximity
+from sklearn.ensemble import RandomForestClassifier
+
 
 def convert_to_rasterio(raster_data, template_raster):
     """
@@ -37,7 +40,7 @@ def extract_values_from_raster(raster, shape_object):
     return value_list
 
 # dem (Digital Elevation model) used to calculate slope and espect of terrain.
-def calculate_slope(dem, x_value, y_value):
+def calculate_return_slope(dem, x_value, y_value):
     """This calculates the slope using pythagoras' theorem"""
     x_data, y_data = np.gradient(dem, x_value, y_value)
     #calculates gradient in direction of x and y
@@ -47,9 +50,20 @@ def calculate_slope(dem, x_value, y_value):
     
     return h_slope_degrees
 
-def make_classifier(x, y, verbose=False):
+def distance_from_fault_raster(top,fault):
+    """Generates the distance of faults from the slope raster using the
+    proximity function"""
+    dist_fault = proximity(topo, fault, 1)
+    
+    return dist_fault
 
-    return
+
+def make_classifier(x, y, verbose=False):
+    """ This generates a random forest classifier"""
+    classifier = RandomForestClassifier(verbose=verbose)
+    classifier.fit(x_values,y_values)
+    
+    return classifier
 
 def make_prob_raster_data(topo, geo, lc, dist_fault, slope, classifier):
 
@@ -94,3 +108,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+
