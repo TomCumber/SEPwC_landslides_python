@@ -2,7 +2,7 @@ import argparse
 import numpy as np
 import rasterio
 import pandas as pd
-import geopandas as pd
+import geopandas as gpd
 from proximity import proximity
 from sklearn.ensemble import RandomForestClassifier
 
@@ -40,7 +40,7 @@ def extract_values_from_raster(raster, shape_object):
     return value_list
 
 # dem (Digital Elevation model) used to calculate slope and espect of terrain.
-def calculate_return_slope(dem, x_value, y_value):
+def calculate_slope(dem, x_value, y_value):
     """This calculates the slope using pythagoras' theorem"""
     x_data, y_data = np.gradient(dem, x_value, y_value)
     #calculates gradient in direction of x and y
@@ -71,7 +71,14 @@ def make_prob_raster_data(topo, geo, lc, dist_fault, slope, classifier):
 
 def create_dataframe(topo, geo, lc, dist_fault, slope, shape, landslides):
 
-    return
+    return gpd.geodataframe.GeoDataFrame(pd.DataFrame(
+        {'elev':extract_values_from_raster(topo, shape),
+         'fault':extract_values_from_raster(dist_fault, shape),
+         'slope':extract_values_from_raster(slope, shape),
+         'LC':extract_values_from_raster(landcover, shape),
+         'Geol':extract_values_from_raster(geo, shape),
+         'ls':landslides}
+        ))
 
 
 def main():
@@ -105,6 +112,32 @@ def main():
 
     args = parser.parse_args()
 
+    topo = rasterio.open(args.topography)
+    geo = rasterio.open(args.geology)
+    landcover = rasterio.open(args.landcover)
+    fault = gpd.read_file(args.faults)
+    landslides = gpd.read_file(args.landslides)
+
+    dem = topo.read(1)
+    x_values, y_values = topo.res
+    slope = calculate_slope(dem,x_values,y_values)
+
+
+    topography_data = np.zeros(topo.shape)
+    convert_to_rasterio(topography_data, topo)
+
+    geology_data = np.zeros(geo.shape)
+    convert_to_rasterio(geology_data, geo)
+
+    landcover_data = np.zeros(landcover.shape)
+    convert_to_rasterio(landcover_data, landcover)
+
+    dist_fault_data = distance_from_fault_raster(topo, fault)
+
+    dataframe = create_dataframe(topography_data, geology_data, landcover_data,
+                          dist_fault_data, slope, fault, landslides)
+
+    print(dataframe)
 
 if __name__ == '__main__':
     main()
