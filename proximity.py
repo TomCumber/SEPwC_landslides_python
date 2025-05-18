@@ -63,3 +63,4 @@ def proximity(raster, rasterised, value):
     distance = distance / dx
 
     return distance
+

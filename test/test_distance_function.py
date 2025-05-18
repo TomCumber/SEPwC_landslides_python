@@ -10,7 +10,8 @@ from dataclasses import asdict
 class TestProximity():
     
     def test_proximity(self):
-
+        
+        
         raster = rasterio.open("test/data/rasterised.tif")
         distance = proximity(raster, raster.read(1), 1)
         assert(77.10382 < np.max(distance) < 77.10383)
