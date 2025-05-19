@@ -7,6 +7,7 @@ from pylint.lint import Run
 from pylint.reporters import CollectingReporter
 from dataclasses import asdict
 import numpy as np
+import rasterio
 
 class TestTerrainAnalysis():
     
@@ -104,8 +105,10 @@ class TestRegression():
         from subprocess import run
         import os
         import rasterio
+        print(os.path.exists('data/AW3D30.tif'))
+        print(os.path.exists('data/Geology.tif'))
 
-        result = run(["python3","terrain_analysis.py",
+        result = run(["python3 ","terrain_analysis.py",
                                 "--topography",
                                 "data/AW3D30.tif",
                                 "--geology",
@@ -115,6 +118,7 @@ class TestRegression():
                                 "--faults",
                                 "data/Confirmed_faults.shp",
                                 "data/landslides.shp",
+                                "--v",
                                 "test.tif"], capture_output=True, check=True)
         assert len(result.stdout) < 25
 

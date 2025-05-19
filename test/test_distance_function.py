@@ -6,6 +6,15 @@ from proximity import *
 from pylint.lint import Run
 from pylint.reporters import CollectingReporter
 from dataclasses import asdict
+import rasterio
+
+try:
+    import rasterio
+except ModuleNotFoundError:
+    print("The module 'module_name' is not installed. ")
+    
+else: 
+    print(" Module 'module_name' is installed. ")
 
 class TestProximity():
     
@@ -13,6 +22,8 @@ class TestProximity():
         
         
         raster = rasterio.open("test/data/rasterised.tif")
+        print(raster.read(1))
+        print ("this is the outptut of raster.read(1):")
         distance = proximity(raster, raster.read(1), 1)
         assert(77.10382 < np.max(distance) < 77.10383)
         assert(-1e-8 < np.min(distance) < 1e-8)        

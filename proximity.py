@@ -27,29 +27,29 @@ def proximity(raster, rasterised, value):
     """
 
     # pylint: disable=too-many-locals
-    gt = raster.transform
-    pixel_size_x = gt[0]
-    pixel_size_y =-gt[4]
-    dx = math.sqrt(pixel_size_x * pixel_size_y)
+    geo_transform = raster.transform
+    pixel_size_x = geo_transform[0]
+    pixel_size_y =-geo_transform[4]
+    pixel_distance = math.sqrt(pixel_size_x * pixel_size_y)
 
     height, width = rasterised.shape # Find the height and width of the array
     cols, rows = np.meshgrid(np.arange(width), np.arange(height))
-    xs, ys = rasterio.transform.xy(raster.transform, rows, cols)
-    # They are actually lists, convert them to arrays
-    xcoords = np.array(xs)
-    ycoords = np.array(ys)
+    x_coordinates, y_coordinates = rasterio.transform.xy(raster.transform, rows, cols)
+    #They are actually lists, convert them to arrays
+    xcoords = np.array(x_coordinates)
+    ycoords = np.array(y_coordinates)
 
     # find coords of points that have the target value in the rasterised raster
     xindex, yindex = np.where(rasterised==value)
     source_coords = []
-    for x, y in zip(xindex, yindex):
-        source_coords.append([xcoords[x,y],ycoords[x,y]])
+    for x_coord, y_coord in zip(xindex, yindex):
+        source_coords.append([xcoords[x_coord,y_coord],ycoords[x_coord,y_coord]])
 
     # now create all coords in the raster where we want distance
     target_coords = []
-    for xs, ys in zip(xcoords, ycoords):
-        for x, y in zip(xs,ys):
-            target_coords.append([x, y])
+    for x_coordinates, y_coordinates in zip(xcoords, ycoords):
+        for x_coord, y_coord in zip(x_coordinates,y_coordinates):
+            target_coords.append([x_coord, y_coord])
 
     source_coords = np.array(source_coords)
     target_coords = np.array(target_coords)
@@ -60,7 +60,6 @@ def proximity(raster, rasterised, value):
         dist = dist.reshape(height,width)
         distance = np.minimum(distance,dist)
 
-    distance = distance / dx
+    distance = distance / pixel_distance
 
     return distance
-
