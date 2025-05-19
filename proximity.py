@@ -40,26 +40,39 @@ def proximity(raster, rasterised, value):
     ycoords = np.array(y_coordinates)
 
     # find coords of points that have the target value in the rasterised raster
-    xindex, yindex = np.where(rasterised==value)
     source_coords = []
-    for x_coord, y_coord in zip(xindex, yindex):
-        source_coords.append([xcoords[x_coord,y_coord],ycoords[x_coord,y_coord]])
+    where_result = np.where(rasterised == value)
+    print(f"rasterised.shape: {rasterised.shape}")
+    print(f"value: {value}")
+    print(f"np.where(rasterised == value): {where_result}")
+    if where_result[0].size > 0: # Check if any values were found
+        for r, c in zip(*where_result):
+            index = r * width + c
+            print(f"r: {r}, c: {c}")  # Add this
+            print(f"xcoords.shape: {xcoords.shape}, ycoords.shape: {ycoords.shape}")  # And this
+            source_coords.append([xcoords[index], ycoords[index]])
 
     # now create all coords in the raster where we want distance
     target_coords = []
-    for x_coordinates, y_coordinates in zip(xcoords, ycoords):
-        for x_coord, y_coord in zip(x_coordinates,y_coordinates):
-            target_coords.append([x_coord, y_coord])
+    for r in range (height):
+        for c in range (width):
+            index = r * width + c
+            target_coords.append([xcoords[index], ycoords[index]])
 
     source_coords = np.array(source_coords)
     target_coords = np.array(target_coords)
 
     distance = np.ones((height,width))*float('inf')
+    print(f"source_coords.shape: {source_coords.shape}")  # Add this
+    print(f"target_coords.shape: {target_coords.shape}") 
     for coords in source_coords:
         dist = spatial.distance.cdist([coords], target_coords)
+        print(f"dist.shape: {dist.shape}")
         dist = dist.reshape(height,width)
         distance = np.minimum(distance,dist)
+    print(f"distance.shape: {distance.shape}") #add this
+    print(f"distance: {distance}")
 
     distance = distance / pixel_distance
-
+    print(f"pixel_distance: {pixel_distance}")
     return distance

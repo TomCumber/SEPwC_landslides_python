@@ -72,7 +72,7 @@ def make_classifier(x_values, y_values, verbose=False):
 
     # return
 
-def create_dataframe(topo, geo, landcover, dist_fault, slope, shape,landslides):
+def create_dataframe(topo, geo, landcover, dist_fault, slope,shape,landslides):
 
     return gpd.geodataframe.GeoDataFrame(pd.DataFrame(
         {'elev':extract_values_from_raster(topo, shape),
@@ -82,6 +82,7 @@ def create_dataframe(topo, geo, landcover, dist_fault, slope, shape,landslides):
          'Geol':extract_values_from_raster(geo, shape),
          'ls':landslides}
         ))
+
 
 def main():
 
@@ -137,7 +138,7 @@ def main():
     dist_fault_data = distance_from_fault_raster(topo, fault)
 
     dataframe = create_dataframe(topography_data, geology_data, landcover_data,
-                          dist_fault_data, slope, fault, landslides)
+                          dist_fault_data, slope,fault, landslides)
 
     print(dataframe)
 
