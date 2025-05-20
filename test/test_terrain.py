@@ -8,6 +8,10 @@ from pylint.reporters import CollectingReporter
 from dataclasses import asdict
 import numpy as np
 import rasterio
+import os 
+from shapely.geometry import Point
+import geopandas as gpd
+import subprocess
 
 class TestTerrainAnalysis():
     
@@ -52,9 +56,9 @@ class TestTerrainAnalysis():
         assert classifier.n_classes_ == 2
 
     def test_create_dataframe(self):
-
+        
         import geopandas as gpd
-
+       
         template = rasterio.open("test/data/raster_template.tif")
         point = gpd.read_file("test/data/test_point.shp")
         geom_sample = list(point.geometry)
@@ -99,16 +103,109 @@ class TestTerrainAnalysis():
         assert nErrors == 0
 
 class TestRegression():
+    
+    def test_regression(self):
+        self.run_test(verbose=False)
+
+    def test_regression_verbose(self):
+        self.run_test(verbose=True)
+
+    def run_test(self, verbose):
+        # Construct absolute paths
+        script_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "terrain_analysis.py")
+        data_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
+
+        # Check if the script exists
+        if not os.path.exists(script_path):
+            print(f"Error: Script not found at {script_path}")
+            pytest.fail(f"Script not found: {script_path}")
+
+        # Check if the data directory exists
+        if not os.path.exists(data_dir):
+            print(f"Error: Data directory not found at {data_dir}")
+            pytest.fail(f"Data directory not found: {data_dir}")
+            
+        # Check if python is in path
+        python_executable = shutil.which("python")
+        if python_executable is None:
+            python_executable = shutil.which("python3")
+        if python_executable is None:
+            print("Error: Python interpreter not found in PATH.")
+            pytest.fail("Python interpreter not found in PATH.")
+        print(f"Using python executable: {python_executable}")
+
+        # Build command
+        command = [
+            python_executable,  # Use the found Python executable
+            script_path,
+            "--topography", os.path.join(data_dir, "AW3D30.tif"),
+            "--geology", os.path.join(data_dir, "Geology.tif"),
+            "--landcover", os.path.join(data_dir, "Landcover.tif"),
+            "--faults", os.path.join(data_dir, "Confirmed_faults.shp"),
+            os.path.join(data_dir, "landslides.shp"),  # Corrected path
+            "test.tif",
+        ]
+        if verbose:
+            command.append("--v")
+
+        print(f"Running command: {command}")  # Print the command
+
+        try:
+            result = subprocess.run(
+                command,
+                capture_output=True,
+                check=True,
+                text=True,  # Get output as text, not bytes
+            )
+            print(f"stdout: {result.stdout}")
+            print(f"stderr: {result.stderr}")
+
+            if verbose:
+                assert len(result.stdout) > 25
+            else:
+                assert len(result.stdout) < 25
+
+            import rasterio
+            with rasterio.open("test.tif") as raster:
+                values = raster.read(1)
+                assert values.max() <= 1
+                assert values.min() >= 0
+            os.remove("test.tif")
+
+        except subprocess.CalledProcessError as e:
+            print(f"Command failed with error: {e}")
+            print(f"stdout: {e.stdout}")  # Print the script's output
+            print(f"stderr: {e.stderr}")  # Print the script's error output
+            raise  # Re-raise the exception to fail the test
 
     def test_regression(self):
-
+        
+        try:
+            subprocess.run([
+               "python", "terrain_analysis.py",
+               "--topography", "data/AW3D30.tif",
+               "--geology", "data/Geology.tif",
+               "--landcover", "data/Landcover.tif",
+               "--faults", "data/Confirmed_faults.shp",
+               "--landslides", "data/landslides.shp",
+               "--output","test.tif"
+               "--v"         
+                          
+            ], check=True, capture_output=True)
+        except subprocess.CalledProcessError as e:
+            print("STDOUT:", e.stdout.decode())
+            print("STDERR:", e.stderr.decode())
+            raise
+        
         from subprocess import run
         import os
         import rasterio
+        import sys 
         print(os.path.exists('data/AW3D30.tif'))
         print(os.path.exists('data/Geology.tif'))
 
-        result = run(["python3 ","terrain_analysis.py",
+        terrain_analysis_path = "C:\\SEPwC_landslides_python\\terrain_analysis.py"
+        result = run(["python ","terrain_analysis.py",
                                 "--topography",
                                 "data/AW3D30.tif",
                                 "--geology",
@@ -128,14 +225,37 @@ class TestRegression():
         assert values.min() >= 0
         os.remove("test.tif")
         
+        # Print full paths
+        print(f"Python executable: {sys.executable}")
+        print(f"Topography: {os.path.abspath('data/AW3D30.tif')}")
+        print(f"Geology: {os.path.abspath('data/Geology.tif')}")
+        print(f"Landcover: {os.path.abspath('data/Landcover.tif')}")
+        print(f"Faults: {os.path.abspath('data/Confirmed_faults.shp')}")
+        print(f"Landslides: {os.path.abspath('data/landslides.shp')}")
+        output_path = os.path.abspath("test.tif")
+        print(f"Output: {output_path}")
+
+        # Run the script with the full python path and absolute paths
+        result = subprocess.run(
+            [sys.executable, "terrain_analysis.py",
+             "--topography", os.path.abspath("data/AW3D30.tif"),
+             "--geology", os.path.abspath("data/Geology.tif"),
+             "--landcover", os.path.abspath("data/Landcover.tif"),
+             "--faults", os.path.abspath("data/Confirmed_faults.shp"),
+             os.path.abspath("data/landslides.shp"),
+             output_path],
+            capture_output=True,
+            check=True,
+            text=True
+        )
 
     def test_regression_verbose(self):
 
         from subprocess import run
         import os
         import rasterio
-
-        result = run(["python3","terrain_analysis.py",
+        terrain_analysis_path = "C:\\SEPwC_landslides_python\\terrain_analysis.py"
+        result = run(["python","terrain_analysis.py",
                                 "--topography",
                                 "data/AW3D30.tif",
                                 "--geology",
@@ -144,9 +264,10 @@ class TestRegression():
                                 "data/Landcover.tif",
                                 "--faults",
                                 "data/Confirmed_faults.shp",
-                                "data/landslides.shp",
-                                "--v",
-                                "test.tif"], capture_output=True, check=True)
+                                "--landslides", "data/landslides.shp",
+                                "--output","test.tif",
+                                "--v"
+                                ], capture_output=True, check=True)
         assert len(result.stdout) > 25
 
         raster = rasterio.open("test.tif")

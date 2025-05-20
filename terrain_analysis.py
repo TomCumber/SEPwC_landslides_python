@@ -1,79 +1,72 @@
-""" Tom Cumberland landlside risk Coursework
-"""
+"""Landslide Coding assessment"""
+
+import argparse
 import numpy as np
 import rasterio
 import pandas as pd
 import geopandas as gpd
-from proximity import proximity
 from sklearn.ensemble import RandomForestClassifier
-import argparse
+from proximity import proximity
 
 
 def convert_to_rasterio(raster_data, template_raster):
-    """
-    The function specifically targets and reads the data from the first band
-    (layer) of the input template_raster dataset. This modifies the
-    'raster_data' array rather than generating a new one
-
-    """
+    '''
+    Reads the first layer (band) of the rasters data and copies
+    using '[:]' modifying 'raster_data' array rather than
+    generating a new one.
+    '''
     raster_data[:] = template_raster.read(1)
 
-    return template_raster #I had to install rasterio as it wasnt installed
-
+    return template_raster
 
 def extract_values_from_raster(raster, shape_object):
-    """
-    This extracts certain values from the raster file
+    '''extracts values from the raster file'''
 
-    """
-
-    #this is creating a list of coordinate pairs using the shape objects
+    # creates a list of coordinate pairs using the shape objects
     coord_pairs = [(shape.x, shape.y) for shape in shape_object]
 
-    #this is samping the raster at certain coordinates
+    # samples the raster at provided coordinates
     values = raster.sample(coord_pairs)
 
-    #converts the 'values' into a list
+    # converts 'values' into a list
     value_list = []
     for value_sample in values:
         value_list.append(value_sample[0])
 
-
     return value_list
 
-# dem (Digital Elevation model) used to calculate slope and espect of terrain.
+# dem (Digital Elevation Model)
 def calculate_slope(dem, x_value, y_value):
-    """This calculates the slope using pythagoras' theorem"""
+    '''Calulates slope using pythagoras' theorem'''
+    # calculates gradient in direction of x and y
     x_data, y_data = np.gradient(dem, x_value, y_value)
-    #calculates gradient in direction of x and y
 
+    # calculates slope length and converts to angle in degrees
     h_slope_degrees = np.arctan(np.sqrt(x_data**2 + y_data**2) * (180 / np.pi))
-    # calculates slope length and concerts to angle in degrees
 
     return h_slope_degrees
 
-def distance_from_fault_raster(topo,fault):
-    """Generates the distance of faults from the slope raster using the
-    proximity function"""
-
+def distance_from_fault_raster(topo, fault):
+    '''Generates the distance from slope raster using the proximity function'''
     dist_fault = proximity(topo, fault, 1)
 
     return dist_fault
 
-
 def make_classifier(x_values, y_values, verbose=False):
-    """ This generates a random forest classifier"""
+    '''Generates a random forest classifier'''
     classifier = RandomForestClassifier(verbose=verbose)
     classifier.fit(x_values,y_values)
 
     return classifier
 
 # def make_prob_raster_data(topo, geo, lc, dist_fault, slope, classifier):
+   # return
 
-    # return
+def create_dataframe(topo,geo,landcover, dist_fault,slope,shape, landslides):
 
-def create_dataframe(topo, geo, landcover, dist_fault, slope,shape,landslides):
-
+    """Combines raster and spatial data into a Dataframe for ML or analysis"""
+     
+    
     return gpd.geodataframe.GeoDataFrame(pd.DataFrame(
         {'elev':extract_values_from_raster(topo, shape),
          'fault':extract_values_from_raster(dist_fault, shape),
@@ -82,7 +75,6 @@ def create_dataframe(topo, geo, landcover, dist_fault, slope,shape,landslides):
          'Geol':extract_values_from_raster(geo, shape),
          'ls':landslides}
         ))
-
 
 def main():
 
@@ -104,9 +96,9 @@ def main():
     parser.add_argument('--faults',
                     required=True,
                     help="fault location shapefile")
-    parser.add_argument("landslides",
+    parser.add_argument("--landslides",
                     help="the landslide location shapefile")
-    parser.add_argument("output",
+    parser.add_argument("--output",
                     help="the output raster file")
     parser.add_argument('-v', '--verbose',
                     action='store_true',
@@ -138,11 +130,9 @@ def main():
     dist_fault_data = distance_from_fault_raster(topo, fault)
 
     dataframe = create_dataframe(topography_data, geology_data, landcover_data,
-                          dist_fault_data, slope,fault, landslides)
+                          dist_fault_data, slope, fault, landslides)
 
     print(dataframe)
-
-
 
 if __name__ == '__main__':
     main()

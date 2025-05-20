@@ -46,9 +46,9 @@ def proximity(raster, rasterised, value):
     print(f"value: {value}")
     print(f"np.where(rasterised == value): {where_result}")
     if where_result[0].size > 0: # Check if any values were found
-        for r, c in zip(*where_result):
-            index = r * width + c
-            print(f"r: {r}, c: {c}")  # Add this
+        for row_idx, col_idx in zip(*where_result):
+            index = row_idx * width + col_idx
+            print(f"row_idx: {row_idx}, col_idx: {col_idx}")  # Add this
             print(f"xcoords.shape: {xcoords.shape}, ycoords.shape: {ycoords.shape}")  # And this
             source_coords.append([xcoords[index], ycoords[index]])
 
@@ -64,7 +64,7 @@ def proximity(raster, rasterised, value):
 
     distance = np.ones((height,width))*float('inf')
     print(f"source_coords.shape: {source_coords.shape}")  # Add this
-    print(f"target_coords.shape: {target_coords.shape}") 
+    print(f"target_coords.shape: {target_coords.shape}")
     for coords in source_coords:
         dist = spatial.distance.cdist([coords], target_coords)
         print(f"dist.shape: {dist.shape}")
